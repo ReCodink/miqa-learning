@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan make:model:*)",
+      "Bash(docker-compose:*)",
+      "Bash(php artisan make:request:*)",
+      "Bash(php artisan:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(docker exec:*)",
+      "Read(//Users/buildwithangga/Documents/Web/jawaracbtbedummy/src/app/Http/Controllers/Api/**)",
+      "Read(//Users/buildwithangga/Documents/Web/jawaracbtbedummy/**)",
+      "Bash(php -l:*)"
+    ],
+    "deny": []
+  }
+}

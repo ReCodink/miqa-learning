@@ -28,7 +28,7 @@ class ClassStudent extends Model
     protected static function booted()
     {
         static::creating(function ($classStudent) {
-            $latestRecord = static::latest('id')->first();
+            $latestRecord = static::latest('created_at')->first();
 
             if ($latestRecord && $latestRecord->code) {
                 $latestNumber = (int) str_replace('CS-', '', $latestRecord->code);

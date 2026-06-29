@@ -38,7 +38,7 @@ class SubjectService
     /**
      * Find subject by ID
      */
-    public function findSubject(int $id, array $fields = ['*']): Subject
+    public function findSubject(string $id, array $fields = ['*']): Subject
     {
         return $this->subjectRepository->findWithRelations($id, $fields);
     }
@@ -104,7 +104,7 @@ class SubjectService
     /**
      * Update subject by ID
      */
-    public function updateSubject(int $id, array $data): Subject
+    public function updateSubject(string $id, array $data): Subject
     {
         return DB::transaction(function () use ($id, $data) {
             $subject = $this->subjectRepository->findWithRelations($id, ['*']);
@@ -138,7 +138,7 @@ class SubjectService
     /**
      * Delete subject by ID
      */
-    public function deleteSubject(int $id): bool
+    public function deleteSubject(string $id): bool
     {
         return DB::transaction(function () use ($id) {
             $subject = $this->subjectRepository->findWithRelations($id, ['id', 'name', 'photo', 'content']);

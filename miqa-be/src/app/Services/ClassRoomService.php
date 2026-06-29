@@ -40,17 +40,17 @@ class ClassRoomService
     /**
      * Find classroom by ID
      */
-    public function findClassRoom(int $id, array $fields = ['*']): ClassRoom
+    public function findClassRoom(string $id, array $fields = ['*']): ClassRoom
     {
         return $this->classRoomRepository->findWithRelations($id, $fields);
     }
 
     /**
-     * Find classrooms by grade level
+     * Find classrooms by protocol
      */
-    public function findClassRoomsByGrade(int $grade, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function findClassRoomByProtocol(string $protocolId, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->classRoomRepository->findByGrade($grade, $fields, $perPage);
+        return $this->classRoomRepository->findByProtocol($protocolId, $fields, $perPage);
     }
 
     /**
@@ -58,7 +58,7 @@ class ClassRoomService
      */
     public function searchClassRooms(string $query, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->classRoomRepository->searchByNameAndGrade($query, $fields, $perPage);
+        return $this->classRoomRepository->searchByNameAndProtocol($query, $fields, $perPage);
     }
 
     /**
@@ -72,7 +72,7 @@ class ClassRoomService
     /**
      * Get students enrolled in classroom
      */
-    public function getEnrolledStudents(int $classRoomId, array $fields = ['*']): Collection
+    public function getEnrolledStudents(string $classRoomId, array $fields = ['*']): Collection
     {
         return $this->classRoomRepository->getEnrolledStudents($classRoomId, $fields);
     }
@@ -80,7 +80,7 @@ class ClassRoomService
     /**
      * Get subjects assigned to classroom
      */
-    public function getAssignedSubjects(int $classRoomId, array $fields = ['*']): Collection
+    public function getAssignedSubjects(string $classRoomId, array $fields = ['*']): Collection
     {
         return $this->classRoomRepository->getAssignedSubjects($classRoomId, $fields);
     }
@@ -88,7 +88,7 @@ class ClassRoomService
     /**
      * Get students available for enrollment
      */
-    public function getAvailableStudents(int $classRoomId): Collection
+    public function getAvailableStudents(string $classRoomId): Collection
     {
         return $this->classRoomRepository->findAvailableStudents($classRoomId);
     }
@@ -110,7 +110,7 @@ class ClassRoomService
     /**
      * Update classroom by ID
      */
-    public function updateClassRoom(int $id, array $data): ClassRoom
+    public function updateClassRoom(string $id, array $data): ClassRoom
     {
         return DB::transaction(function () use ($id, $data) {
             $classRoom = $this->classRoomRepository->findWithRelations($id, ['*']);
@@ -134,21 +134,21 @@ class ClassRoomService
     /**
      * Delete classroom by ID
      */
-    public function deleteClassRoom(int $id): bool
+    public function deleteClassRoom(string $id): bool
     {
         return DB::transaction(function () use ($id) {
             $classRoom = $this->classRoomRepository->findWithRelations($id, ['photo']);
-            
+
             // Check if classroom has any assigned students
             if ($classRoom->classStudents_count > 0 || \App\Models\ClassStudent::where('class_room_id', $id)->exists()) {
                 throw new \InvalidArgumentException('Cannot delete classroom that has enrolled students');
             }
-            
+
             // Check if classroom has any assigned subjects
             if ($classRoom->classSubjects_count > 0 || \App\Models\ClassSubject::where('class_room_id', $id)->exists()) {
                 throw new \InvalidArgumentException('Cannot delete classroom that has assigned subjects');
             }
-            
+
             $photoPath = $classRoom->getRawOriginal('photo'); // Get raw photo path
 
             if ($photoPath) {
@@ -168,21 +168,21 @@ class ClassRoomService
             // First check all classrooms for relationships
             foreach ($ids as $id) {
                 $classRoom = $this->classRoomRepository->findWithRelations($id, ['id', 'name']);
-                
+
                 // Check if classroom has any assigned students
                 if ($classRoom->classStudents_count > 0 || \App\Models\ClassStudent::where('class_room_id', $id)->exists()) {
                     throw new \InvalidArgumentException("Cannot delete classroom '{$classRoom->name}' that has enrolled students");
                 }
-                
+
                 // Check if classroom has any assigned subjects
                 if ($classRoom->classSubjects_count > 0 || \App\Models\ClassSubject::where('class_room_id', $id)->exists()) {
                     throw new \InvalidArgumentException("Cannot delete classroom '{$classRoom->name}' that has assigned subjects");
                 }
             }
-            
+
             // If all validations pass, proceed with deletion
             $classRooms = $this->classRoomRepository->findManyByIds($ids, ['id', 'photo']);
-            
+
             foreach ($classRooms as $classRoom) {
                 $photoPath = $classRoom->getRawOriginal('photo'); // Get raw photo path
                 if ($photoPath) {
@@ -201,7 +201,7 @@ class ClassRoomService
     /**
      * Enroll student in classroom
      */
-    public function enrollStudent(int $classRoomId, int $studentId, array $additionalData = []): ClassStudent
+    public function enrollStudent(string $classRoomId, string $studentId, array $additionalData = []): ClassStudent
     {
         return DB::transaction(function () use ($classRoomId, $studentId, $additionalData) {
             return $this->classRoomRepository->enrollStudent($classRoomId, $studentId, $additionalData);
@@ -211,7 +211,7 @@ class ClassRoomService
     /**
      * Enroll multiple students in classroom
      */
-    public function enrollMultipleStudents(int $classRoomId, array $studentIds, array $additionalData = []): array
+    public function enrollMultipleStudents(string $classRoomId, array $studentIds, array $additionalData = []): array
     {
         return DB::transaction(function () use ($classRoomId, $studentIds, $additionalData) {
             $enrolled = [];
@@ -225,7 +225,7 @@ class ClassRoomService
     /**
      * Remove student from classroom
      */
-    public function unenrollStudent(int $classRoomId, int $studentId): bool
+    public function unenrollStudent(string $classRoomId, string $studentId): bool
     {
         return DB::transaction(function () use ($classRoomId, $studentId) {
             return $this->classRoomRepository->unenrollStudent($classRoomId, $studentId);
@@ -235,7 +235,7 @@ class ClassRoomService
     /**
      * Assign subject to classroom
      */
-    public function assignSubject(int $classRoomId, int $subjectId): ClassSubject
+    public function assignSubject(string $classRoomId, string $subjectId): ClassSubject
     {
         return DB::transaction(function () use ($classRoomId, $subjectId) {
             return $this->classRoomRepository->assignSubject($classRoomId, $subjectId);
@@ -245,7 +245,7 @@ class ClassRoomService
     /**
      * Assign multiple subjects to classroom
      */
-    public function assignMultipleSubjects(int $classRoomId, array $subjectIds): array
+    public function assignMultipleSubjects(string $classRoomId, array $subjectIds): array
     {
         return DB::transaction(function () use ($classRoomId, $subjectIds) {
             $assigned = [];
@@ -259,7 +259,7 @@ class ClassRoomService
     /**
      * Remove subject from classroom
      */
-    public function unassignSubject(int $classRoomId, int $subjectId): bool
+    public function unassignSubject(string $classRoomId, string $subjectId): bool
     {
         return DB::transaction(function () use ($classRoomId, $subjectId) {
             return $this->classRoomRepository->unassignSubject($classRoomId, $subjectId);
@@ -269,11 +269,11 @@ class ClassRoomService
     /**
      * Update student status in classroom
      */
-    public function updateStudentStatus(int $classRoomId, int $studentId, bool $hasPassed, ?string $rapport = null): int
+    public function updateStudentStatus(string $classRoomId, string $studentId, bool $hasPassed, ?string $rapport = null): int
     {
         return DB::transaction(function () use ($classRoomId, $studentId, $hasPassed, $rapport) {
             $classRoom = $this->classRoomRepository->findWithRelations($classRoomId, ['id']);
-            
+
             return $classRoom->classStudents()
                 ->where('student_id', $studentId)
                 ->update([
@@ -286,16 +286,16 @@ class ClassRoomService
     /**
      * Get classroom statistics
      */
-    public function getClassRoomStatistics(int $classRoomId): array
+    public function getClassRoomStatistics(string $classRoomId): array
     {
         $classRoom = $this->classRoomRepository->findWithRelations($classRoomId, ['*']);
-        
+
         return [
             'total_students' => $classRoom->class_students_count,
             'total_subjects' => $classRoom->class_subjects_count,
             'passed_students' => $classRoom->classStudents()->where('has_passed', true)->count(),
             'failed_students' => $classRoom->classStudents()->where('has_passed', false)->count(),
-            'grade' => $classRoom->grade,
+            'protocol_id' => $classRoom->protocol_id,
             'name' => $classRoom->name
         ];
     }

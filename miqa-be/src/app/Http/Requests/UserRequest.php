@@ -12,17 +12,19 @@ class UserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Handle authorization in middleware/policies
+        return true; // Handle authorization via Middleware/Policies
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $id = $this->route('user');
+        // Safe resolution whether route parameter is a Model instance or a ULID string
+        $userRoute = $this->route('user');
+        $userId = is_object($userRoute) ? $userRoute->id : $userRoute;
+
+        $isPost = $this->isMethod('post');
 
         return [
             'name' => 'required|string|max:255',
@@ -30,15 +32,16 @@ class UserRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($id)
+                Rule::unique('users', 'email')->ignore($userId)
             ],
-            'password' => $this->isMethod('post') 
-                        ? 'required|string|min:8|confirmed'
-                        : 'sometimes|string|min:8|confirmed',
-            'photo' => $this->isMethod('post')
-                        ? 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
-                        : 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // Changed 'sometimes' to 'nullable' for updates to handle empty payload elements safely
+            'password' => $isPost
+                ? 'required|string|min:8|confirmed'
+                : 'nullable|string|min:8|confirmed',
             'gender' => 'required|string|in:male,female',
+            'photo' => $isPost
+                ? 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+                : 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 
@@ -48,19 +51,31 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Name is required',
-            'name.max' => 'Name must not exceed 255 characters',
-            'email.required' => 'Email address is required',
-            'email.email' => 'Please provide a valid email address',
-            'email.unique' => 'This email address is already registered',
-            'password.required' => 'Password is required',
-            'password.min' => 'Password must be at least 8 characters',
-            'password.confirmed' => 'Password confirmation does not match',
-            'photo.image' => 'Photo must be an image file',
-            'photo.mimes' => 'Photo must be jpeg, png, jpg, or gif format',
-            'photo.max' => 'Photo size must not exceed 2MB',
-            'gender.required' => 'Gender selection is required',
-            'gender.in' => 'Gender must be either male or female',
+            'name.required' => 'Name is required.',
+            'name.max' => 'Name must not exceed 255 characters.',
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Please provide a valid email address.',
+            'email.unique' => 'This email address is already registered.',
+            'gender.required' => 'Gender selection is required.',
+            'gender.in' => 'Gender must be either male or female.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'photo.required' => 'A profile photo is required.',
+            'photo.image' => 'Photo must be an image file.',
+            'photo.mimes' => 'Photo must be jpeg, png, jpg, or gif format.',
+            'photo.max' => 'Photo size must not exceed 2MB.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => 'Name',
+            'email' => 'Email Address',
+            'gender' => 'Gender',
+            'password' => 'Password',
+            'photo' => 'Profile Photo',
         ];
     }
 }

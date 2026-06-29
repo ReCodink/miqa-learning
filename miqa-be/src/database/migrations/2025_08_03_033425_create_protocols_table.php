@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('protocols', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('code')->unique();
             $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->timestamps();

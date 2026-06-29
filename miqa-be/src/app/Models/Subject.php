@@ -36,7 +36,7 @@ class Subject extends Model
     {
         static::creating(function ($subject) {
             // Mencari record subject terakhir berdasarkan ID ULID untuk menentukan urutan berikutnya
-            $latestSubject = static::latest('id')->first();
+            $latestSubject = static::latest('created_at')->first();
 
             if ($latestSubject && $latestSubject->code) {
                 $latestNumber = (int) str_replace('SBJ-', '', $latestSubject->code);

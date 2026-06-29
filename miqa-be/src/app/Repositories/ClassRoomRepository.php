@@ -16,8 +16,8 @@ class ClassRoomRepository
     public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return ClassRoom::select($fields)
-            ->latest()
-            ->withCount(['classStudents', 'classSubjects'])
+            ->latest('created_at')
+            ->withCount(['protocols', 'classStudents', 'classSubjects'])
             ->paginate($perPage);
     }
 
@@ -27,38 +27,39 @@ class ClassRoomRepository
     public function getAll(array $fields = ['*']): Collection
     {
         return ClassRoom::select($fields)
-            ->latest()
-            ->withCount(['classStudents', 'classSubjects'])
+            ->latest('created_at')
+            ->withCount(['protocols', 'classStudents', 'classSubjects'])
             ->get();
     }
 
     /**
      * Find classroom by ID with full relationships
      */
-    public function findWithRelations(int $id, array $fields = ['*']): ClassRoom
+    public function findWithRelations(string $id, array $fields = ['*']): ClassRoom
     {
         return ClassRoom::select($fields)
             ->with([
                 'protocol:id,name,description',
                 'classStudents.student:id,name,email,photo,gender',
                 'classSubjects.subject' => function ($query) {
-                    $query->select(['id', 'name', 'photo', 'tagline', 'content', 'teacher_id'])
+                // Menyertakan kolom 'code' agar tidak kosong di API Resource
+                $query->select(['id', 'code', 'name', 'photo', 'tagline', 'content', 'teacher_id'])
                           ->with('teacher:id,name,email,photo')
                           ->withCount('subjectExams');
                 }
             ])
-            ->withCount(['classStudents', 'classSubjects'])
+            ->withCount(['protocol', 'classStudents', 'classSubjects'])
             ->findOrFail($id);
     }
 
     /**
-     * Find classrooms by grade level
+     * Find classrooms by protocol
      */
-    public function findByGrade(int $grade, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function findByProtocol(string $protocolId, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return ClassRoom::select($fields)
-            ->where('grade', $grade)
-            ->withCount(['classStudents', 'classSubjects'])
+            ->where('protocol_id', $protocolId)
+            ->withCount(['protocol', 'classStudents', 'classSubjects'])
             ->latest()
             ->paginate($perPage);
     }
@@ -66,7 +67,7 @@ class ClassRoomRepository
     /**
      * Get students enrolled in classroom
      */
-    public function getEnrolledStudents(int $classRoomId, array $fields = ['*']): Collection
+    public function getEnrolledStudents(string $classRoomId, array $fields = ['*']): Collection
     {
         return ClassRoom::select(['id'])
             ->with([
@@ -84,7 +85,7 @@ class ClassRoomRepository
     /**
      * Get subjects assigned to classroom
      */
-    public function getAssignedSubjects(int $classRoomId, array $fields = ['*']): Collection
+    public function getAssignedSubjects(string $classRoomId, array $fields = ['*']): Collection
     {
         return ClassRoom::select(['id'])
             ->with([
@@ -109,7 +110,7 @@ class ClassRoomRepository
     /**
      * Update classroom by ID
      */
-    public function update(int $id, array $data): ClassRoom
+    public function update(string $id, array $data): ClassRoom
     {
         $classRoom = ClassRoom::findOrFail($id);
         $classRoom->update($data);
@@ -119,21 +120,21 @@ class ClassRoomRepository
     /**
      * Delete classroom by ID
      */
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $classRoom = ClassRoom::findOrFail($id);
         return $classRoom->delete();
     }
 
     /**
-     * Search classrooms by name and grade
+     * Search classrooms by name and protocol
      */
-    public function searchByNameAndGrade(string $query, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function searchByNameAndProtocol(string $query, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return ClassRoom::select($fields)
             ->where('name', 'LIKE', "%{$query}%")
-            ->orWhere('grade', 'LIKE', "%{$query}%")
-            ->withCount(['classStudents', 'classSubjects'])
+            ->orWhere('protocol_id', 'LIKE', "%{$query}%")
+            ->withCount(['protocol', 'classStudents', 'classSubjects'])
             ->latest()
             ->paginate($perPage);
     }
@@ -152,7 +153,7 @@ class ClassRoomRepository
     /**
      * Enroll student in classroom
      */
-    public function enrollStudent(int $classRoomId, int $studentId, array $additionalData = []): ClassStudent
+    public function enrollStudent(string $classRoomId, string $studentId, array $additionalData = []): ClassStudent
     {
         $classRoom = ClassRoom::findOrFail($classRoomId);
         return $classRoom->classStudents()->create(array_merge([
@@ -164,7 +165,7 @@ class ClassRoomRepository
     /**
      * Remove student from classroom
      */
-    public function unenrollStudent(int $classRoomId, int $studentId): bool
+    public function unenrollStudent(string $classRoomId, string $studentId): bool
     {
         $classRoom = ClassRoom::findOrFail($classRoomId);
         return $classRoom->classStudents()
@@ -175,7 +176,7 @@ class ClassRoomRepository
     /**
      * Assign subject to classroom
      */
-    public function assignSubject(int $classRoomId, int $subjectId): ClassSubject
+    public function assignSubject(string $classRoomId, string $subjectId): ClassSubject
     {
         $classRoom = ClassRoom::findOrFail($classRoomId);
         return $classRoom->classSubjects()->create([
@@ -187,7 +188,7 @@ class ClassRoomRepository
     /**
      * Remove subject from classroom
      */
-    public function unassignSubject(int $classRoomId, int $subjectId): bool
+    public function unassignSubject(string $classRoomId, string $subjectId): bool
     {
         $classRoom = ClassRoom::findOrFail($classRoomId);
         return $classRoom->classSubjects()
@@ -202,18 +203,17 @@ class ClassRoomRepository
     {
         $queryBuilder = ClassRoom::select($fields)
             ->withCount(['classStudents', 'classSubjects'])
-            ->latest();
+            ->latest('created_at');
 
         if (!empty($query)) {
-            $queryBuilder->where('name', 'LIKE', "%{$query}%")
-                         ->orWhere('grade', 'LIKE', "%{$query}%");
+            $queryBuilder->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('protocol_id', 'LIKE', "%{$query}%");
+            });
         }
 
         $total = $queryBuilder->count();
-
-        $classRooms = $queryBuilder->skip(($page - 1) * $perPage)
-            ->take($perPage)
-            ->get();
+        $classRooms = $queryBuilder->skip(($page - 1) * $perPage)->take($perPage)->get();
 
         return [
             'data' => $classRooms,
@@ -236,7 +236,7 @@ class ClassRoomRepository
 
         if (!empty($query)) {
             $queryBuilder->where('name', 'LIKE', "%{$query}%")
-                         ->orWhere('grade', 'LIKE', "%{$query}%");
+                ->orWhere('protocol_id', 'LIKE', "%{$query}%");
         }
 
         return $queryBuilder->get();
@@ -245,7 +245,7 @@ class ClassRoomRepository
     /**
      * Get students available for enrollment
      */
-    public function findAvailableStudents(int $classRoomId): Collection
+    public function findAvailableStudents(string $classRoomId): Collection
     {
         return \App\Models\User::whereHas('roles', function ($query) {
                 $query->where('name', 'student');

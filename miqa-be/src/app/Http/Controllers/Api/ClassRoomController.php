@@ -33,7 +33,7 @@ class ClassRoomController extends Controller
     public function index(Request $request)
     {
         try {
-            $fields = ['id', 'name', 'photo', 'grade'];
+            $fields = ['id', 'code', 'name', 'photo', 'protocol_id'];
             $perPage = $request->integer('per_page', 6);
 
             // Handle search
@@ -46,10 +46,10 @@ class ClassRoomController extends Controller
                 return ClassRoomResource::collection($classRooms);
             }
 
-            // Filter by grade
-            if ($request->filled('grade')) {
-                $classRooms = $this->classRoomService->findClassRoomsByGrade(
-                    $request->integer('grade'),
+            // Filter by protocol
+            if ($request->filled('protocol_id')) {
+                $classRooms = $this->classRoomService->findClassRoomByProtocol(
+                    $request->string('protocol_id'),
                     $fields,
                     $perPage
                 );
@@ -77,7 +77,7 @@ class ClassRoomController extends Controller
     /**
      * Display the specified classroom
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $classRoom = $this->classRoomService->findClassRoom($id, ['*']);
@@ -129,7 +129,7 @@ class ClassRoomController extends Controller
     /**
      * Update the specified classroom
      */
-    public function update(ClassRoomRequest $request, int $id)
+    public function update(ClassRoomRequest $request, string $id)
     {
         try {
             $classRoom = $this->classRoomService->updateClassRoom($id, $request->validated());
@@ -161,7 +161,7 @@ class ClassRoomController extends Controller
     /**
      * Remove the specified classroom
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->classRoomService->deleteClassRoom($id);
@@ -191,7 +191,7 @@ class ClassRoomController extends Controller
     /**
      * Get students enrolled in classroom
      */
-    public function students(int $id)
+    public function students(string $id)
     {
         try {
             $students = $this->classRoomService->getEnrolledStudents($id);
@@ -216,7 +216,7 @@ class ClassRoomController extends Controller
     /**
      * Get subjects assigned to classroom
      */
-    public function subjects(int $id)
+    public function subjects(string $id)
     {
         try {
             $subjects = $this->classRoomService->getAssignedSubjects($id);
@@ -241,7 +241,7 @@ class ClassRoomController extends Controller
     /**
      * Enroll student in classroom
      */
-    public function enrollStudent(ClassStudentEnrollRequest $request, int $id)
+    public function enrollStudent(ClassStudentEnrollRequest $request, string $id)
     {
         try {
 
@@ -279,7 +279,7 @@ class ClassRoomController extends Controller
     /**
      * Remove student from classroom
      */
-    public function unenrollStudent(int $id, int $studentId)
+    public function unenrollStudent(string $id, string $studentId)
     {
         try {
             $this->classRoomService->unenrollStudent($id, $studentId);
@@ -304,11 +304,11 @@ class ClassRoomController extends Controller
     /**
      * Assign subject to classroom
      */
-    public function assignSubject(ClassSubjectAssignRequest $request, int $id)
+    public function assignSubject(ClassSubjectAssignRequest $request, string $id)
     {
         try {
 
-            $assignment = $this->classRoomService->assignSubject($id, $request->integer('subject_id'));
+            $assignment = $this->classRoomService->assignSubject($id, $request->string('subject_id'));
 
             return response()->json([
                 'success' => true,
@@ -338,7 +338,7 @@ class ClassRoomController extends Controller
     /**
      * Remove subject from classroom
      */
-    public function unassignSubject(int $id, int $subjectId)
+    public function unassignSubject(string $id, string $subjectId)
     {
         try {
             $this->classRoomService->unassignSubject($id, $subjectId);
@@ -369,9 +369,17 @@ class ClassRoomController extends Controller
             $search = $request->getSearchQuery();
             $page = $request->getPage();
             $perPage = $request->getLimit(6);
-            $fields = ['id', 'name', 'photo', 'grade'];
 
+            // 1. Keep your fields if you want, but ensure foreign keys exist
+            $fields = ['id', 'code', 'name', 'photo', 'protocol_id'];
+
+            // 2. You need to pass relationships to your service or load them after.
+            // If your service method supports eager loading, pass them there.
+            // Otherwise, you can load them directly onto the result payload like this:
             $result = $this->classRoomService->searchWithPagination($search, $fields, $page, $perPage);
+
+            // Assuming $result['data'] is a Laravel Eloquent Collection:
+            $result['data']->load(['classSubjects', 'classStudents', 'protocols']);
 
             return response()->json([
                 'success' => true,

@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
-use App\Repositories\UserRepository;
 use App\Models\User;
+use App\Repositories\UserRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
@@ -16,51 +19,103 @@ class UserService
         $this->userRepository = $userRepository;
     }
 
-    /**
-     * Get paginated users
-     */
     public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return $this->userRepository->getPaginated($fields, $perPage);
     }
 
-    /**
-     * Get all users without pagination
-     */
     public function getAll(array $fields = ['*']): Collection
     {
         return $this->userRepository->getAll($fields);
     }
 
-    /**
-     * Search users by query
-     */
-    public function searchUsers(string $query, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function findUser(string $id, array $fields = ['*']): User
     {
-        return $this->userRepository->searchByNameAndEmail($query, $fields, $perPage);
+        return $this->userRepository->getById($id, $fields);
     }
 
-    /**
-     * Get users by gender
-     */
+    public function createUser(array $data): User
+    {
+        return DB::transaction(function () use ($data) {
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                $data['photo'] = $this->uploadPhoto($data['photo']);
+            }
+            return $this->userRepository->create($data);
+        });
+    }
+
+    public function updateUser(string $id, array $data): User
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $user = $this->userRepository->getById($id, ['id', 'photo']);
+            $oldPhoto = $user->getRawOriginal('photo');
+
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                $data['photo'] = $this->uploadPhoto($data['photo']);
+            }
+
+            $updatedUser = $this->userRepository->update($id, $data);
+
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile && $oldPhoto) {
+                $this->deletePhoto($oldPhoto);
+            }
+
+            return $updatedUser;
+        });
+    }
+
+    public function deleteUser(string $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $user = $this->userRepository->getById($id, ['id', 'photo']);
+
+            if (method_exists($user, 'subjects') && $user->subjects()->count() > 0) {
+                throw new \InvalidArgumentException("Cannot delete user. This user has subjects assigned to it.");
+            }
+
+            $photoPath = $user->getRawOriginal('photo');
+            if ($photoPath) {
+                $this->deletePhoto($photoPath);
+            }
+
+            return $this->userRepository->delete($id);
+        });
+    }
+
+    public function searchUsers(string $query, array $fields = ['*'], int $perPage = 10, int $page = null): LengthAwarePaginator
+    {
+        return $this->userRepository->search($query, $fields, $perPage, $page);
+    }
+
+    public function findUsersByCode(string $code, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->userRepository->findByCode($code, $fields, $perPage);
+    }
+
     public function findUsersByGender(string $gender, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return $this->userRepository->findByGender($gender, $fields, $perPage);
     }
 
-    /**
-     * Get users by role
-     */
     public function findUsersByRole(string $role, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return $this->userRepository->findByRole($role, $fields, $perPage);
     }
 
-    /**
-     * Search users with pagination for modal
-     */
-    public function searchWithPagination(string $query = '', array $fields = ['*'], int $page = 1, int $perPage = 10): array
+    public function searchUsersForModal(string $query = '', array $fields = ['*'], int $limit = 6): Collection
     {
-        return $this->userRepository->searchWithPagination($query, $fields, $page, $perPage);
+        return $this->userRepository->searchForModal($query, $fields, $limit);
+    }
+
+    private function uploadPhoto(UploadedFile $photo): string
+    {
+        return $photo->store('users', 'public');
+    }
+
+    private function deletePhoto(string $photoPath): void
+    {
+        if (Storage::disk('public')->exists($photoPath)) {
+            Storage::disk('public')->delete($photoPath);
+        }
     }
 }

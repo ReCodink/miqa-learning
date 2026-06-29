@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Repositories\AuthRepository;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -15,14 +17,37 @@ class AuthService
         $this->authRepository = $authRepository;
     }
 
-    public function login(array $data)
+    public function login(array $data): User
     {
-        return $this->authRepository->login($data);
+        $user = $this->authRepository->attemptSessionLogin([
+            'email'     => $data['email'],
+            'password'  => $data['password']
+        ]);
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.']
+            ]);
+        }
+
+        return $user->load('roles');
     }
 
-    public function tokenLogin(array $data)
+    public function tokenLogin(array $data): array
     {
-        return $this->authRepository->tokenLogin($data);
-    }
+        $result = $this->authRepository->attemptTokenLogin([
+            'email'     => $data['email'],
+            'password'  => $data['password']
+        ]);
 
+        if (!$result) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.']
+            ]);
+        }
+
+        $result['user']->load('roles');
+
+        return $result;
+    }
 }

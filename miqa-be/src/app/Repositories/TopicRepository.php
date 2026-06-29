@@ -33,7 +33,7 @@ class TopicRepository
     /**
      * Find topic by ID with subjects and teachers
      */
-    public function findWithSubjects(int $id, array $fields = ['*']): Topic
+    public function findWithSubjects(string $id, array $fields = ['*']): Topic
     {
         return Topic::select($fields)
             ->with([
@@ -43,32 +43,7 @@ class TopicRepository
             ->findOrFail($id);
     }
 
-    /**
-     * Create a new topic
-     */
-    public function create(array $data): Topic
-    {
-        return Topic::create($data);
-    }
 
-    /**
-     * Update topic by ID
-     */
-    public function update(int $id, array $data): Topic
-    {
-        $topic = Topic::findOrFail($id);
-        $topic->update($data);
-        return $topic->fresh();
-    }
-
-    /**
-     * Delete topic by ID
-     */
-    public function delete(int $id): bool
-    {
-        $topic = Topic::findOrFail($id);
-        return $topic->delete();
-    }
 
     /**
      * Search topics by name and description
@@ -98,7 +73,7 @@ class TopicRepository
         }
 
         $total = $queryBuilder->count();
-        
+
         $topics = $queryBuilder->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
@@ -140,5 +115,32 @@ class TopicRepository
             ->with('subjects')
             ->withCount('subjects')
             ->get();
+    }
+
+    /**
+     * Create a new topic
+     */
+    public function create(array $data): Topic
+    {
+        return Topic::create($data);
+    }
+
+    /**
+     * Update topic by ID
+     */
+    public function update(string $id, array $data): Topic
+    {
+        $topic = Topic::findOrFail($id);
+        $topic->update($data);
+        return $topic->fresh();
+    }
+
+    /**
+     * Delete topic by ID
+     */
+    public function delete(string $id): bool
+    {
+        $topic = Topic::findOrFail($id);
+        return $topic->delete();
     }
 }

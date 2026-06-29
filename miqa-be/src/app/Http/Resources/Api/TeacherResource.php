@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherResource extends JsonResource
 {
@@ -12,21 +13,24 @@ class TeacherResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'photo' => $this->photo,
+            'id'     => $this->id,
+            'code'   => $this->code,
+            'name'   => $this->name,
+            'email'  => $this->email,
             'gender' => $this->gender,
-            'subjects_count' => $this->whenCounted('subjects'),
-            'subjects' => SubjectResource::collection($this->whenLoaded('subjects')),
-            'roles' => $this->when($this->relationLoaded('roles'), function () {
-                return $this->roles->pluck('name');
-            }),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+
+            // CLEAN IMAGE PATH RESOLUTION:
+            'photo'  => $this->photo
+                ? (filter_var($this->photo, FILTER_VALIDATE_URL)
+                    ? $this->photo
+                    : asset('storage/' . $this->photo))
+                : null,
+
+            'subjects' => $this->whenLoaded('subjects'),
+            'roles'    => $this->whenLoaded('roles'),
         ];
     }
 }

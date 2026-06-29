@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BulkDeleteRequest;
-use App\Http\Requests\TeacherRequest;
-use App\Http\Requests\TeacherSearchRequest;
+use App\Http\Requests\StoreTeacherRequest;
+use App\Http\Requests\UpdateTeacherRequest;
 use App\Http\Resources\Api\TeacherResource;
 use App\Services\TeacherService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TeacherController extends Controller
 {
@@ -24,51 +24,30 @@ class TeacherController extends Controller
     /**
      * Display a listing of teachers
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection|JsonResponse
     {
         try {
-            $fields = ['id', 'name', 'email', 'photo', 'gender'];
+            $fields = ['id', 'code', 'name', 'email', 'photo', 'gender'];
             $perPage = $request->integer('per_page', 6);
 
-            // Handle search
-            if ($request->filled('search')) {
-                $teachers = $this->teacherService->searchTeachers(
-                    $request->string('search'),
-                    $fields,
-                    $perPage
-                );
-                return TeacherResource::collection($teachers);
-            }
-
-            // Filter by gender
-            if ($request->filled('gender')) {
-                $teachers = $this->teacherService->findTeachersByGender(
-                    $request->string('gender'),
-                    $fields,
-                    $perPage
-                );
-                return TeacherResource::collection($teachers);
-            }
-
-            // Handle all parameter
             if ($request->boolean('all')) {
-                $teachers = $this->teacherService->getAll($fields);
-                return TeacherResource::collection($teachers);
+                return TeacherResource::collection($this->teacherService->getAll($fields));
             }
 
-            // Handle unassigned parameter
             if ($request->boolean('unassigned')) {
                 $teachers = $this->teacherService->getUnassignedTeachers($fields);
-                return TeacherResource::collection($teachers);
+            } elseif ($request->filled('search')) {
+                $teachers = $this->teacherService->searchTeachers($request->string('search'), $fields, $perPage);
+            } elseif ($request->filled('gender')) {
+                $teachers = $this->teacherService->findTeachersByGender($request->string('gender'), $fields, $perPage);
+            } else {
+                $teachers = $this->teacherService->getPaginated($fields, $perPage);
             }
 
-            // Default paginated response
-            $teachers = $this->teacherService->getPaginated($fields, $perPage);
             return TeacherResource::collection($teachers);
-
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to retrieve teachers',
+                'message' => 'Failed to retrieve teachers.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
@@ -77,23 +56,24 @@ class TeacherController extends Controller
     /**
      * Display the specified teacher
      */
-    public function show(int $id)
+    public function show(string $id): JsonResponse
     {
         try {
             $teacher = $this->teacherService->findTeacher($id, ['*']);
             return response()->json([
                 'success' => true,
+                'message' => 'Teacher retrieved successfully.',
                 'data' => new TeacherResource($teacher)
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Teacher not found'
+                'message' => 'Teacher not found.'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve teacher',
+                'message' => 'Failed to retrieve teacher.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
@@ -102,25 +82,19 @@ class TeacherController extends Controller
     /**
      * Store a newly created teacher
      */
-    public function store(TeacherRequest $request)
+    public function store(StoreTeacherRequest $request): JsonResponse
     {
         try {
             $teacher = $this->teacherService->createTeacher($request->validated());
             return response()->json([
                 'success' => true,
-                'message' => 'Teacher created successfully',
+                'message' => 'Teacher created successfully.',
                 'data' => new TeacherResource($teacher)
             ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create teacher',
+                'message' => 'Failed to create teacher.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
@@ -129,30 +103,24 @@ class TeacherController extends Controller
     /**
      * Update the specified teacher
      */
-    public function update(TeacherRequest $request, int $id)
+    public function update(UpdateTeacherRequest $request, string $id): JsonResponse
     {
         try {
             $teacher = $this->teacherService->updateTeacher($id, $request->validated());
             return response()->json([
                 'success' => true,
-                'message' => 'Teacher updated successfully',
+                'message' => 'Teacher updated successfully.',
                 'data' => new TeacherResource($teacher)
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Teacher not found'
+                'message' => 'Teacher not found.'
             ], 404);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update teacher',
+                'message' => 'Failed to update teacher.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
@@ -161,38 +129,37 @@ class TeacherController extends Controller
     /**
      * Remove the specified teacher
      */
-    public function destroy(int $id)
+    public function destroy(string $id): JsonResponse
     {
         try {
             $this->teacherService->deleteTeacher($id);
             return response()->json([
                 'success' => true,
-                'message' => 'Teacher deleted successfully'
+                'message' => 'Teacher deleted successfully.'
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Teacher not found'
+                'message' => 'Teacher not found.'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete teacher',
+                'message' => 'Failed to delete teacher.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
 
     /**
-     * Search teachers with pagination for frontend modal
+     * Function Search With Pagination
      */
-    public function search(TeacherSearchRequest $request)
+    public function search(Request $request): JsonResponse
     {
         try {
-
-            $search = $request->get('q', '');
-            $page = $request->get('page', 1);
-            $perPage = $request->get('limit', 6);
+            $search = $request->get('search', '');
+            $page = $request->integer('page', 1);
+            $perPage = $request->integer('limit', 6);
             $fields = ['id', 'name', 'email', 'photo'];
 
             $result = $this->teacherService->searchWithPagination($search, $fields, $page, $perPage);
@@ -205,17 +172,10 @@ class TeacherController extends Controller
                 'per_page' => $result['per_page'],
                 'has_more' => $result['has_more']
             ]);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to search teachers',
+                'message' => 'Failed to search teachers.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
@@ -224,7 +184,7 @@ class TeacherController extends Controller
     /**
      * Get authenticated teacher's profile with subjects
      */
-    public function profile(Request $request)
+    public function profile(Request $request): JsonResponse
     {
         try {
             $teacher = $request->user();
@@ -232,12 +192,13 @@ class TeacherController extends Controller
 
             return response()->json([
                 'success' => true,
+                'message' => 'Teacher profile retrieved successfully.',
                 'data' => new TeacherResource($teacherProfile)
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve teacher profile',
+                'message' => 'Failed to retrieve teacher profile.',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

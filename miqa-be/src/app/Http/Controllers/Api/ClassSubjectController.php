@@ -49,7 +49,7 @@ class ClassSubjectController extends Controller
             // Filter by classroom
             if ($request->filled('class_room_id')) {
                 $assignments = $this->classSubjectService->findAssignmentsByClassRoom(
-                    $request->integer('class_room_id'),
+                    $request->string('class_room_id'),
                     $fields
                 );
                 return ClassSubjectResource::collection($assignments);
@@ -58,7 +58,7 @@ class ClassSubjectController extends Controller
             // Filter by subject
             if ($request->filled('subject_id')) {
                 $assignments = $this->classSubjectService->findAssignmentsBySubject(
-                    $request->integer('subject_id'),
+                    $request->string('subject_id'),
                     $fields
                 );
                 return ClassSubjectResource::collection($assignments);
@@ -67,7 +67,7 @@ class ClassSubjectController extends Controller
             // Filter by teacher
             if ($request->filled('teacher_id')) {
                 $assignments = $this->classSubjectService->findAssignmentsByTeacher(
-                    $request->integer('teacher_id'),
+                    $request->string('teacher_id'),
                     $fields
                 );
                 return ClassSubjectResource::collection($assignments);
@@ -76,16 +76,16 @@ class ClassSubjectController extends Controller
             // Filter by topic
             if ($request->filled('topic_id')) {
                 $assignments = $this->classSubjectService->findAssignmentsByTopic(
-                    $request->integer('topic_id'),
+                    $request->string('topic_id'),
                     $fields
                 );
                 return ClassSubjectResource::collection($assignments);
             }
 
-            // Filter by grade
-            if ($request->filled('grade')) {
-                $assignments = $this->classSubjectService->findAssignmentsByGrade(
-                    $request->integer('grade'),
+            // Filter by protocol ID
+            if ($request->filled('protocol_id')) {
+                $assignments = $this->classSubjectService->findAssignmentsByProtocolId(
+                    $request->string('protocol_id'),
                     $fields,
                     $perPage
                 );
@@ -113,7 +113,7 @@ class ClassSubjectController extends Controller
     /**
      * Display the specified assignment
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $assignment = $this->classSubjectService->findAssignment($id, ['*']);
@@ -165,7 +165,7 @@ class ClassSubjectController extends Controller
     /**
      * Update the specified assignment
      */
-    public function update(ClassSubjectRequest $request, int $id)
+    public function update(ClassSubjectRequest $request, string $id)
     {
         try {
             $assignment = $this->classSubjectService->updateAssignment($id, $request->validated());
@@ -197,7 +197,7 @@ class ClassSubjectController extends Controller
     /**
      * Remove the specified assignment (unassign subject)
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->classSubjectService->unassignSubject($id);
@@ -260,7 +260,7 @@ class ClassSubjectController extends Controller
     /**
      * Get available subjects for classroom
      */
-    public function availableSubjects(int $classRoomId)
+    public function availableSubjects(string $classRoomId)
     {
         try {
             $subjects = $this->classSubjectService->getAvailableSubjectsForClassRoom($classRoomId);
@@ -285,7 +285,7 @@ class ClassSubjectController extends Controller
     /**
      * Get available classrooms for subject
      */
-    public function availableClassRooms(int $subjectId)
+    public function availableClassRooms(string $subjectId)
     {
         try {
             $classrooms = $this->classSubjectService->getAvailableClassRoomsForSubject($subjectId);
@@ -310,7 +310,7 @@ class ClassSubjectController extends Controller
     /**
      * Bulk assign subjects to classroom
      */
-    public function bulkAssignToClassRoom(ClassSubjectBulkAssignToClassRoomRequest $request, int $classRoomId)
+    public function bulkAssignToClassRoom(ClassSubjectBulkAssignToClassRoomRequest $request, string $classRoomId)
     {
         try {
 
@@ -342,7 +342,7 @@ class ClassSubjectController extends Controller
     /**
      * Bulk assign classrooms to subject
      */
-    public function bulkAssignToSubject(ClassSubjectBulkAssignToSubjectRequest $request, int $subjectId)
+    public function bulkAssignToSubject(ClassSubjectBulkAssignToSubjectRequest $request, string $subjectId)
     {
         try {
 

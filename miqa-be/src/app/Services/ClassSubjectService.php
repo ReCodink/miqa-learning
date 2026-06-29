@@ -46,7 +46,7 @@ class ClassSubjectService
     /**
      * Find assignment by ID
      */
-    public function findAssignment(int $id, array $fields = ['*']): ClassSubject
+    public function findAssignment(string $id, array $fields = ['*']): ClassSubject
     {
         return $this->classSubjectRepository->findWithRelations($id, $fields);
     }
@@ -54,7 +54,7 @@ class ClassSubjectService
     /**
      * Find assignments by classroom ID
      */
-    public function findAssignmentsByClassRoom(int $classRoomId, array $fields = ['*']): Collection
+    public function findAssignmentsByClassRoom(string $classRoomId, array $fields = ['*']): Collection
     {
         return $this->classSubjectRepository->findByClassRoom($classRoomId, $fields);
     }
@@ -62,7 +62,7 @@ class ClassSubjectService
     /**
      * Find assignments by subject ID
      */
-    public function findAssignmentsBySubject(int $subjectId, array $fields = ['*']): Collection
+    public function findAssignmentsBySubject(string $subjectId, array $fields = ['*']): Collection
     {
         return $this->classSubjectRepository->findBySubject($subjectId, $fields);
     }
@@ -70,7 +70,7 @@ class ClassSubjectService
     /**
      * Find assignments by teacher ID
      */
-    public function findAssignmentsByTeacher(int $teacherId, array $fields = ['*']): Collection
+    public function findAssignmentsByTeacher(string $teacherId, array $fields = ['*']): Collection
     {
         return $this->classSubjectRepository->findByTeacher($teacherId, $fields);
     }
@@ -78,17 +78,17 @@ class ClassSubjectService
     /**
      * Find assignments by topic ID
      */
-    public function findAssignmentsByTopic(int $topicId, array $fields = ['*']): Collection
+    public function findAssignmentsByTopic(string $topicId, array $fields = ['*']): Collection
     {
         return $this->classSubjectRepository->findByTopic($topicId, $fields);
     }
 
     /**
-     * Find assignments by grade level
+     * Find assignments by protocol ID
      */
-    public function findAssignmentsByGrade(int $grade, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function findAssignmentsByProtocolId(string $protocolId, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->classSubjectRepository->findByGrade($grade, $fields, $perPage);
+        return $this->classSubjectRepository->findByProtocol($protocolId, $fields, $perPage);
     }
 
     /**
@@ -123,7 +123,7 @@ class ClassSubjectService
     /**
      * Update assignment
      */
-    public function updateAssignment(int $id, array $data): ClassSubject
+    public function updateAssignment(string $id, array $data): ClassSubject
     {
         return DB::transaction(function () use ($id, $data) {
             // Validate new subject if being updated
@@ -155,7 +155,7 @@ class ClassSubjectService
     /**
      * Unassign subject from classroom (delete assignment)
      */
-    public function unassignSubject(int $id): bool
+    public function unassignSubject(string $id): bool
     {
         return DB::transaction(function () use ($id) {
             return $this->classSubjectRepository->delete($id);
@@ -165,7 +165,7 @@ class ClassSubjectService
     /**
      * Unassign subject by classroom and subject IDs
      */
-    public function unassignSubjectFromClassRoom(int $classRoomId, int $subjectId): bool
+    public function unassignSubjectFromClassRoom(string $classRoomId, string $subjectId): bool
     {
         return DB::transaction(function () use ($classRoomId, $subjectId) {
             $assignment = $this->classSubjectRepository->findByClassRoomAndSubject($classRoomId, $subjectId);
@@ -179,7 +179,7 @@ class ClassSubjectService
     /**
      * Get available subjects for classroom
      */
-    public function getAvailableSubjectsForClassRoom(int $classRoomId): Collection
+    public function getAvailableSubjectsForClassRoom(string $classRoomId): Collection
     {
         // Validate classroom exists
         $this->classRoomRepository->findWithRelations($classRoomId, ['id', 'name']);
@@ -190,7 +190,7 @@ class ClassSubjectService
     /**
      * Get available classrooms for subject
      */
-    public function getAvailableClassRoomsForSubject(int $subjectId): Collection
+    public function getAvailableClassRoomsForSubject(string $subjectId): Collection
     {
         // Validate subject exists
         $this->subjectRepository->find($subjectId);
@@ -201,7 +201,7 @@ class ClassSubjectService
     /**
      * Bulk assign subjects to classroom
      */
-    public function bulkAssignSubjectsToClassRoom(int $classRoomId, array $subjectIds): array
+    public function bulkAssignSubjectsToClassRoom(string $classRoomId, array $subjectIds): array
     {
         return DB::transaction(function () use ($classRoomId, $subjectIds) {
             // Validate classroom exists
@@ -220,7 +220,7 @@ class ClassSubjectService
     /**
      * Bulk assign classrooms to subject
      */
-    public function bulkAssignClassRoomsToSubject(int $subjectId, array $classRoomIds): array
+    public function bulkAssignClassRoomsToSubject(string $subjectId, array $classRoomIds): array
     {
         return DB::transaction(function () use ($subjectId, $classRoomIds) {
             // Validate subject exists
@@ -254,7 +254,7 @@ class ClassSubjectService
     /**
      * Get classroom assignment statistics
      */
-    public function getClassRoomStatistics(int $classRoomId): array
+    public function getClassRoomStatistics(string $classRoomId): array
     {
         // Validate classroom exists
         $this->classRoomRepository->findWithRelations($classRoomId, ['id', 'name']);
@@ -265,7 +265,7 @@ class ClassSubjectService
     /**
      * Get subject assignment statistics
      */
-    public function getSubjectStatistics(int $subjectId): array
+    public function getSubjectStatistics(string $subjectId): array
     {
         // Validate subject exists
         $this->subjectRepository->find($subjectId);
@@ -276,7 +276,7 @@ class ClassSubjectService
     /**
      * Check if subject is assigned to classroom
      */
-    public function isSubjectAssigned(int $classRoomId, int $subjectId): bool
+    public function isSubjectAssigned(string $classRoomId, string $subjectId): bool
     {
         return $this->classSubjectRepository->isSubjectAssigned($classRoomId, $subjectId);
     }
@@ -284,7 +284,7 @@ class ClassSubjectService
     /**
      * Find specific assignment by classroom and subject
      */
-    public function findAssignmentByClassRoomAndSubject(int $classRoomId, int $subjectId): ?ClassSubject
+    public function findAssignmentByClassRoomAndSubject(string $classRoomId, string $subjectId): ?ClassSubject
     {
         return $this->classSubjectRepository->findByClassRoomAndSubject($classRoomId, $subjectId);
     }
@@ -308,7 +308,7 @@ class ClassSubjectService
     /**
      * Get assignments for teacher's subjects
      */
-    public function getTeacherAssignments(int $teacherId, array $fields = ['*']): Collection
+    public function getTeacherAssignments(string $teacherId, array $fields = ['*']): Collection
     {
         return $this->classSubjectRepository->findByTeacher($teacherId, $fields);
     }
@@ -332,7 +332,7 @@ class ClassSubjectService
     /**
      * Get classrooms assigned to teacher via their subjects
      */
-    public function getTeacherClassRooms(int $teacherId): Collection
+    public function getTeacherClassRooms(string $teacherId): Collection
     {
         return $this->classSubjectRepository->getTeacherClassRooms($teacherId);
     }

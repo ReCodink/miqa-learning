@@ -22,7 +22,7 @@ class ClassRoomSearchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => 'nullable|string|max:255',
+            'search' => 'nullable|string|max:255',
             'page' => 'nullable|integer|min:1',
             'limit' => 'nullable|integer|min:1|max:50'
         ];
@@ -36,8 +36,8 @@ class ClassRoomSearchRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'q.string' => 'Search query must be a string',
-            'q.max' => 'Search query cannot exceed 255 characters',
+            'search.string' => 'Search query must be a string',
+            'search.max' => 'Search query cannot exceed 255 characters',
             'page.integer' => 'Page must be an integer',
             'page.min' => 'Page must be at least 1',
             'limit.integer' => 'Limit must be an integer',
@@ -51,7 +51,7 @@ class ClassRoomSearchRequest extends FormRequest
      */
     public function getSearchQuery(): string
     {
-        return $this->input('q', '');
+        return $this->input('search', '');
     }
 
     /**

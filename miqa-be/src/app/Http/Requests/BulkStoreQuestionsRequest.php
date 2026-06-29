@@ -23,7 +23,7 @@ class BulkStoreQuestionsRequest extends FormRequest
     {
         return [
             'questions' => 'required|array|min:1',
-            'questions.*.subject_exam_id' => 'required|integer|exists:subject_exams,id',
+            'questions.*.subject_exam_id' => 'required|string|exists:subject_exams,id',
             'questions.*.name' => 'required|string|max:1000',
             'questions.*.timer' => 'required|integer|min:1|max:3600',
             'questions.*.type' => 'required|string|in:multiple_choice,essay',

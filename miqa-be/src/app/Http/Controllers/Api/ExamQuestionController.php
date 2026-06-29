@@ -87,7 +87,7 @@ class ExamQuestionController extends Controller
     /**
      * Display the specified exam question
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $question = $this->examQuestionService->findExamQuestion($id);
@@ -148,7 +148,7 @@ class ExamQuestionController extends Controller
     /**
      * Update the specified exam question
      */
-    public function update(ExamQuestionRequest $request, int $id)
+    public function update(ExamQuestionRequest $request, string $id)
     {
         try {
             $data = $request->validated();
@@ -188,7 +188,7 @@ class ExamQuestionController extends Controller
     /**
      * Remove the specified exam question
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->examQuestionService->deleteExamQuestion($id);
@@ -235,7 +235,7 @@ class ExamQuestionController extends Controller
     /**
      * Duplicate question to another exam
      */
-    public function duplicate(DuplicateQuestionRequest $request, int $id)
+    public function duplicate(DuplicateQuestionRequest $request, string $id)
     {
         try {
             $question = $this->examQuestionService->duplicateQuestion(

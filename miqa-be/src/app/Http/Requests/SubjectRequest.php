@@ -34,17 +34,33 @@ class SubjectRequest extends FormRequest
             'content' => $this->isMethod('post')
                         ? 'required|file|mimes:pdf|max:10240'
                         : 'sometimes|file|mimes:pdf|max:10240',
-            'topic_id' => 'required|integer|exists:topics,id',
+            'topic_id' => 'required|string|exists:topics,id',
             'teacher_id' => [
                 'required',
-                'integer',
+                'string',
                 'exists:users,id',
                 function ($attribute, $value, $fail) {
                     if ($value && !User::find($value)?->hasRole('teacher')) {
-                        $fail('The selected user must have teacher role.');
+                        $fail('The selected user must have a teacher role.');
                     }
                 }
             ],
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'name'       => 'subject name',
+            'tagline'    => 'subject tagline',
+            'about'      => 'subject description',
+            'photo'      => 'photo file',
+            'content'    => 'content PDF file',
+            'topic_id'   => 'topic',
+            'teacher_id' => 'teacher',
         ];
     }
 
@@ -54,20 +70,13 @@ class SubjectRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Subject name is required',
-            'tagline.required' => 'Subject tagline is required',
-            'about.required' => 'Subject description is required',
-            'photo.image' => 'Photo must be an image file',
-            'photo.mimes' => 'Photo must be jpeg, png, jpg, or gif format',
-            'photo.max' => 'Photo size must not exceed 2MB',
-            'content.required' => 'Content PDF file is required',
-            'content.file' => 'Content must be a file',
-            'content.mimes' => 'Content must be a PDF file',
-            'content.max' => 'Content file size must not exceed 10MB',
-            'topic_id.required' => 'Topic selection is required',
-            'topic_id.exists' => 'Selected topic does not exist',
-            'teacher_id.exists' => 'Selected teacher does not exist',
-            'teacher_id' => 'Selected user must have teacher role',
+            // Leaving specific file constraints or structural overrides intact
+            'photo.mimes'       => 'The photo file must be a jpeg, png, jpg, or gif format.',
+            'photo.max'         => 'The photo file size must not exceed 2MB.',
+            'content.mimes'     => 'The content must be a valid PDF file.',
+            'content.max'       => 'The content PDF file size must not exceed 10MB.',
+            'topic_id.exists'   => 'The selected topic does not exist.',
+            'teacher_id.exists' => 'The selected teacher does not exist.',
         ];
     }
 }

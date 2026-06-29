@@ -149,7 +149,7 @@ class StudentController extends Controller
     /**
      * Update the specified student
      */
-    public function update(StudentRequest $request, int $id)
+    public function update(StudentRequest $request, string $id)
     {
         try {
             $student = $this->studentService->updateStudent($id, $request->validated());
@@ -181,7 +181,7 @@ class StudentController extends Controller
     /**
      * Remove the specified student
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->studentService->deleteStudent($id);
@@ -244,7 +244,7 @@ class StudentController extends Controller
     /**
      * Get student statistics and performance
      */
-    public function statistics(int $id)
+    public function statistics(string $id)
     {
         try {
             $statistics = $this->studentService->getStudentStatistics($id);

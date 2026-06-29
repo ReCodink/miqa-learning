@@ -78,7 +78,7 @@ class QuestionOptionController extends Controller
     /**
      * Display the specified question option
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $option = $this->questionOptionService->findQuestionOption($id);
@@ -133,7 +133,7 @@ class QuestionOptionController extends Controller
     /**
      * Update the specified question option
      */
-    public function update(QuestionOptionRequest $request, int $id)
+    public function update(QuestionOptionRequest $request, string $id)
     {
         try {
             $data = $request->validated();
@@ -167,7 +167,7 @@ class QuestionOptionController extends Controller
     /**
      * Remove the specified question option
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->questionOptionService->deleteQuestionOption($id);

@@ -111,7 +111,7 @@ class ClassStudentController extends Controller
     /**
      * Display the specified enrollment
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $enrollment = $this->classStudentService->findEnrollment($id, ['*']);
@@ -163,7 +163,7 @@ class ClassStudentController extends Controller
     /**
      * Update the specified enrollment
      */
-    public function update(ClassStudentRequest $request, int $id)
+    public function update(ClassStudentRequest $request, string $id)
     {
         try {
             $enrollment = $this->classStudentService->updateEnrollment($id, $request->validated());
@@ -195,7 +195,7 @@ class ClassStudentController extends Controller
     /**
      * Remove the specified enrollment (unenroll student)
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->classStudentService->unenrollStudent($id);
@@ -258,7 +258,7 @@ class ClassStudentController extends Controller
     /**
      * Bulk enroll students in classroom
      */
-    public function bulkEnroll(ClassStudentBulkEnrollRequest $request, int $classRoomId)
+    public function bulkEnroll(ClassStudentBulkEnrollRequest $request, string $classRoomId)
     {
         try {
 
@@ -292,7 +292,7 @@ class ClassStudentController extends Controller
     /**
      * Update student status in classroom
      */
-    public function updateStatus(ClassStudentUpdateStatusRequest $request, int $studentId, int $classRoomId)
+    public function updateStatus(ClassStudentUpdateStatusRequest $request, string $studentId, string $classRoomId)
     {
         try {
 
@@ -333,7 +333,7 @@ class ClassStudentController extends Controller
     /**
      * Upload rapport PDF for student-classroom enrollment (Manager only)
      */
-    public function uploadRapport(ClassStudentUploadRapportRequest $request, int $studentId, int $classRoomId)
+    public function uploadRapport(ClassStudentUploadRapportRequest $request, string $studentId, string $classRoomId)
     {
         try {
 
@@ -371,7 +371,7 @@ class ClassStudentController extends Controller
     /**
      * Download rapport PDF for student-classroom enrollment (All roles with authorization)
      */
-    public function downloadRapport(Request $request, int $studentId, int $classRoomId)
+    public function downloadRapport(Request $request, string $studentId, string $classRoomId)
     {
         try {
             $user = $request->user();
@@ -411,7 +411,7 @@ class ClassStudentController extends Controller
     /**
      * Get rapport PDF info for student-classroom enrollment (All roles with authorization)
      */
-    public function getRapportInfo(Request $request, int $studentId, int $classRoomId)
+    public function getRapportInfo(Request $request, string $studentId, string $classRoomId)
     {
         try {
             $user = $request->user();
@@ -451,7 +451,7 @@ class ClassStudentController extends Controller
     /**
      * Delete rapport PDF for student-classroom enrollment (Manager only)
      */
-    public function deleteRapport(int $studentId, int $classRoomId)
+    public function deleteRapport(string $studentId, string $classRoomId)
     {
         try {
             $enrollment = $this->classStudentService->deleteRapport($studentId, $classRoomId);
@@ -478,7 +478,7 @@ class ClassStudentController extends Controller
     /**
      * Get student's own rapport PDF info (Student-specific endpoint)
      */
-    public function getStudentRapportInfo(Request $request, int $classRoomId)
+    public function getStudentRapportInfo(Request $request, string $classRoomId)
     {
         try {
             $student = $request->user();
@@ -510,7 +510,7 @@ class ClassStudentController extends Controller
     /**
      * Download student's own rapport PDF (Student-specific endpoint)
      */
-    public function downloadStudentRapport(Request $request, int $classRoomId)
+    public function downloadStudentRapport(Request $request, string $classRoomId)
     {
         try {
             $student = $request->user();

@@ -154,7 +154,7 @@ class SubjectExamController extends Controller
     /**
      * Display the specified exam
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $exam = $this->subjectExamService->findExamWithQuestions($id);
@@ -227,7 +227,7 @@ class SubjectExamController extends Controller
     /**
      * Update the specified exam
      */
-    public function update(SubjectExamRequest $request, int $id)
+    public function update(SubjectExamRequest $request, string $id)
     {
         try {
             $user = $request->user();
@@ -298,7 +298,7 @@ class SubjectExamController extends Controller
     /**
      * Remove the specified exam
      */
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, string $id)
     {
         try {
             $user = $request->user();
@@ -391,7 +391,7 @@ class SubjectExamController extends Controller
     /**
      * Duplicate exam
      */
-    public function duplicate(SubjectExamDuplicateRequest $request, int $id)
+    public function duplicate(SubjectExamDuplicateRequest $request, string $id)
     {
         try {
 
@@ -425,7 +425,7 @@ class SubjectExamController extends Controller
     /**
      * Get exam statistics
      */
-    public function statistics(int $id)
+    public function statistics(string $id)
     {
         try {
             $statistics = $this->subjectExamService->getExamStatistics($id);
@@ -450,7 +450,7 @@ class SubjectExamController extends Controller
     /**
      * Get exam status
      */
-    public function status(int $id)
+    public function status(string $id)
     {
         try {
             $status = $this->subjectExamService->getExamStatus($id);
@@ -583,7 +583,7 @@ class SubjectExamController extends Controller
     /**
      * Get exams for a specific subject available to authenticated student
      */
-    public function getSubjectExams(Request $request, int $subjectId)
+    public function getSubjectExams(Request $request, string $subjectId)
     {
         try {
             $student = $request->user();
@@ -1011,7 +1011,7 @@ class SubjectExamController extends Controller
     /**
      * Update exam for authenticated teacher's subject
      */
-    public function updateTeacherExam(SubjectExamRequest $request, int $id)
+    public function updateTeacherExam(SubjectExamRequest $request, string $id)
     {
         try {
             $teacher = $request->user();
@@ -1112,7 +1112,7 @@ class SubjectExamController extends Controller
     /**
      * Delete exam for authenticated teacher's subject
      */
-    public function deleteTeacherExam(Request $request, int $id)
+    public function deleteTeacherExam(Request $request, string $id)
     {
         try {
             $teacher = $request->user();

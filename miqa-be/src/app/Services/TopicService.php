@@ -38,7 +38,7 @@ class TopicService
     /**
      * Find topic by ID
      */
-    public function findTopic(int $id, array $fields = ['*']): Topic
+    public function findTopic(string $id, array $fields = ['*']): Topic
     {
         return $this->topicRepository->findWithSubjects($id, $fields);
     }
@@ -69,7 +69,7 @@ class TopicService
     /**
      * Update topic by ID
      */
-    public function updateTopic(int $id, array $data): Topic
+    public function updateTopic(string $id, array $data): Topic
     {
         return DB::transaction(function () use ($id, $data) {
             $topic = $this->topicRepository->findWithSubjects($id, ['*']);
@@ -93,7 +93,7 @@ class TopicService
     /**
      * Delete topic by ID
      */
-    public function deleteTopic(int $id): bool
+    public function deleteTopic(string $id): bool
     {
         return DB::transaction(function () use ($id) {
             $topic = $this->topicRepository->findWithSubjects($id, ['id', 'photo']);

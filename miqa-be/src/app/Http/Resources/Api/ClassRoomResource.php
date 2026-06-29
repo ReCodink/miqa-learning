@@ -16,10 +16,9 @@ class ClassRoomResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
             'code' => $this->code,
+            'name' => $this->name,
             'photo' => $this->photo,
-            'grade' => $this->grade,
             'protocol_id' => $this->protocol_id,
             'protocol' => new ProtocolsResource($this->whenLoaded('protocol')),
             'class_students_count' => $this->whenCounted('classStudents'),

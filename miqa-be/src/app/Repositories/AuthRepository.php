@@ -3,48 +3,37 @@
 namespace App\Repositories;
 
 use App\Http\Resources\Api\UserResource;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class AuthRepository
 {
 
-    public function login(array $data)
+    public function attemptSessionLogin(array $credentials): ?User
     {
-        $credentials = [
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ];
-
         if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'The provided credentials do not match our records.',
-            ], 401);
+            return null;
         }
 
         request()->session()->regenerate();
 
         $user = Auth::user();
-
-        return response()->json([
-            'message' => 'Login successful',
-            'user' => new UserResource($user->load('roles')),
-        ]);
+        return $user;
     }
 
-    public function tokenLogin(array $data)
+    public function attemptTokenLogin(array $credentials): ?array
     {
-        if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']])) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if (!Auth::attempt($credentials)) {
+            return null;
         }
 
         $user = Auth::user();
         $token = $user->createToken('API Token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Login successful',
-            'token'   => $token,
-            'user'    => new UserResource($user->load('roles')),
-        ]);
+        return [
+            'user' => $user,
+            'token' => $token
+        ];
     }
 
 }

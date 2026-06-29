@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePresenceSessionRequest; // Pastikan namespace ini sesuai
 use App\Http\Resources\PresenceSessionResource;
 use App\Models\PresenceSession;
 use App\Services\AttendanceService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Exception;
 
 class PresenceSessionController extends Controller
 {
@@ -19,153 +23,271 @@ class PresenceSessionController extends Controller
     }
 
     /**
+     * Get list of presence sessions with optional filtering
+     */
+    public function index(Request $request): AnonymousResourceCollection|JsonResponse
+    {
+        try {
+            $perPage = $request->integer('per_page', 6);
+
+            if ($request->boolean('all')) {
+                $sessions = PresenceSession::with('createdBy')->get();
+                return PresenceSessionResource::collection($sessions);
+            }
+
+            $query = PresenceSession::with('createdBy')->orderBy('created_at', 'desc');
+
+            if ($request->filled('session_type')) {
+                $query->where('session_type', $request->string('session_type'));
+            }
+
+            if ($request->filled('class_room_id')) {
+                $query->where('class_room_id', $request->string('class_room_id'));
+            }
+
+            $sessions = $query->paginate($perPage);
+            return PresenceSessionResource::collection($sessions);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve presence sessions.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
      * Create a new presence session
      */
-    public function store(Request $request): JsonResponse
+    public function store(StorePresenceSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'class_room_id' => 'required|exists:class_rooms,id',
-            'session_name' => 'required|string|max:255',
-            'session_type' => 'required|in:class,event,exam_preparation',
-            'scheduled_start_at' => 'nullable|date',
-            'scheduled_end_at' => 'nullable|date|after:scheduled_start_at',
-            'gps_latitude' => 'nullable|numeric|between:-90,90',
-            'gps_longitude' => 'nullable|numeric|between:-180,180',
-            'gps_radius_meters' => 'nullable|integer|min:10|max:500',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validated();
+            $validated['created_by_user_id'] = auth()->id();
 
-        $validated['created_by_user_id'] = auth()->id();
+            $session = PresenceSession::create($validated);
 
-        $session = PresenceSession::create($validated);
+            return response()->json([
+                'success' => true,
+                'message' => 'Presence session created successfully.',
+                'data' => new PresenceSessionResource($session->load('createdBy'))
+            ], 201);
 
-        return response()->json([
-            'success' => true,
-            'data' => new PresenceSessionResource($session->load('createdBy'))
-        ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create presence session.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
      * Get session details
      */
-    public function show(PresenceSession $session): JsonResponse
+    public function show(string $id): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => new PresenceSessionResource($session->load(['createdBy', 'qrTokens', 'presences']))
-        ]);
+        try {
+            $session = PresenceSession::with(['createdBy', 'qrTokens', 'presences'])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Presence session retrieved successfully.',
+                'data' => new PresenceSessionResource($session)
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve presence session.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
      * Update session details
      */
-    public function update(Request $request, PresenceSession $session): JsonResponse
+    public function update(StorePresenceSessionRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'session_name' => 'nullable|string|max:255',
-            'session_type' => 'nullable|in:class,event,exam_preparation',
-            'scheduled_start_at' => 'nullable|date',
-            'scheduled_end_at' => 'nullable|date|after:scheduled_start_at',
-            'gps_latitude' => 'nullable|numeric|between:-90,90',
-            'gps_longitude' => 'nullable|numeric|between:-180,180',
-            'gps_radius_meters' => 'nullable|integer|min:10|max:500',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $session = PresenceSession::findOrFail($id);
 
-        $session->update($validated);
+            $session->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'data' => new PresenceSessionResource($session->refresh()->load(['createdBy', 'qrTokens', 'presences']))
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Presence session updated successfully.',
+                'data' => new PresenceSessionResource($session->refresh()->load(['createdBy', 'qrTokens', 'presences']))
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update presence session.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
      * Activate session (start attendance)
      */
-    public function activate(PresenceSession $session): JsonResponse
+    public function activate(string $id): JsonResponse
     {
-        if ($session->is_active) {
+        try {
+            $session = PresenceSession::findOrFail($id);
+
+            if ($session->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session is already active',
+                ], 400);
+            }
+
+            $session->activate();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Presence session activated successfully.',
+                'data' => [
+                    'id' => $session->id,
+                    'is_active' => $session->is_active,
+                    'actual_start_at' => $session->actual_start_at,
+                ],
+            ]);
+
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Session is already active',
-            ], 400);
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to activate the session.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
-
-        $session->activate();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $session->id,
-                'is_active' => $session->is_active,
-                'actual_start_at' => $session->actual_start_at,
-            ],
-        ]);
     }
 
     /**
      * Deactivate session (end attendance)
      */
-    public function deactivate(PresenceSession $session): JsonResponse
+    public function deactivate(string $id): JsonResponse
     {
-        if (!$session->is_active) {
+        try {
+            $session = PresenceSession::findOrFail($id);
+
+            if (!$session->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session is not active',
+                ], 400);
+            }
+
+            $session->deactivate();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Presence session deactivated successfully.',
+                'data' => [
+                    'id' => $session->id,
+                    'is_active' => $session->is_active,
+                    'actual_end_at' => $session->actual_end_at,
+                ],
+            ]);
+
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Session is not active',
-            ], 400);
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to deactivate the session.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
-
-        $session->deactivate();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $session->id,
-                'is_active' => $session->is_active,
-                'actual_end_at' => $session->actual_end_at,
-            ],
-        ]);
     }
 
     /**
      * Get session attendance report
      */
-    public function report(PresenceSession $session): JsonResponse
+    public function report(string $id): JsonResponse
     {
-        $report = $this->attendanceService->getSessionReport($session);
+        try {
+            $session = PresenceSession::findOrFail($id);
+            $report = $this->attendanceService->getSessionReport($session);
 
-        return response()->json([
-            'success' => true,
-            'data' => $report,
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Session report generated successfully.',
+                'data' => $report,
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate session report.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
      * Get list of attendances for session
      */
-    public function attendances(Request $request, PresenceSession $session): JsonResponse
+    public function attendances(Request $request, string $id): JsonResponse
     {
-        $query = $session->presences()
-            ->with(['user', 'securityFlags'])
-            ->orderBy('checked_in_at', 'desc');
+        try {
+            $session = PresenceSession::findOrFail($id);
 
-        // Filter by validation status
-        if ($request->has('is_valid')) {
-            $query->where('is_valid', filter_var($request->input('is_valid'), FILTER_VALIDATE_BOOLEAN));
-        }
+            $query = $session->presences()
+                ->with(['user', 'securityFlags'])
+                ->orderBy('checked_in_at', 'desc');
 
-        $attendances = $query->paginate(20);
+            if ($request->has('is_valid')) {
+                $query->where('is_valid', $request->boolean('is_valid'));
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $attendances->items(),
-            'pagination' => [
+            $perPage = $request->integer('limit', 20);
+            $attendances = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $attendances->items(),
                 'total' => $attendances->total(),
-                'per_page' => $attendances->perPage(),
                 'current_page' => $attendances->currentPage(),
-                'last_page' => $attendances->lastPage(),
-            ],
-        ]);
+                'per_page' => $attendances->perPage(),
+                'has_more' => $attendances->hasMorePages()
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Presence session not found.'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load attendance list.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

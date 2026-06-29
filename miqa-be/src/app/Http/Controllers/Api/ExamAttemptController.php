@@ -59,7 +59,7 @@ class ExamAttemptController extends Controller
     /**
      * Display the specified exam attempt
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $attempt = $this->examAttemptService->findExamAttempt($id);
@@ -113,7 +113,7 @@ class ExamAttemptController extends Controller
     /**
      * Update the specified exam attempt
      */
-    public function update(ExamAttemptRequest $request, int $id)
+    public function update(ExamAttemptRequest $request, string $id)
     {
         try {
             $attempt = $this->examAttemptService->updateExamAttempt($id, $request->validated());
@@ -146,7 +146,7 @@ class ExamAttemptController extends Controller
     /**
      * Remove the specified exam attempt
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->examAttemptService->deleteExamAttempt($id);

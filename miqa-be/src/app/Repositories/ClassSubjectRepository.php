@@ -7,6 +7,7 @@ use App\Models\Subject;
 use App\Models\ClassRoom;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ClassSubjectRepository
 {
@@ -20,7 +21,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->paginate($perPage);
@@ -36,7 +37,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->get();
@@ -52,7 +53,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,about,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->findOrFail($id);
     }
@@ -87,7 +88,7 @@ class ClassSubjectRepository
     /**
      * Find assignments by classroom ID
      */
-    public function findByClassRoom(int $classRoomId, array $fields = ['*']): Collection
+    public function findByClassRoom(string $classRoomId, array $fields = ['*']): Collection
     {
         return ClassSubject::select($fields)
             ->where('class_room_id', $classRoomId)
@@ -103,11 +104,11 @@ class ClassSubjectRepository
     /**
      * Find assignments by subject ID
      */
-    public function findBySubject(int $subjectId, array $fields = ['*']): Collection
+    public function findBySubject(string $subjectId, array $fields = ['*']): Collection
     {
         return ClassSubject::select($fields)
             ->where('subject_id', $subjectId)
-            ->with(['classRoom:id,name,photo,grade'])
+            ->with(['classRoom:id,name,photo,protocol_id'])
             ->latest()
             ->get();
     }
@@ -115,7 +116,7 @@ class ClassSubjectRepository
     /**
      * Find assignments by teacher ID (through subject relationship)
      */
-    public function findByTeacher(int $teacherId, array $fields = ['*']): Collection
+    public function findByTeacher(string $teacherId, array $fields = ['*']): Collection
     {
         return ClassSubject::select($fields)
             ->whereHas('subject', function($query) use ($teacherId) {
@@ -124,7 +125,7 @@ class ClassSubjectRepository
             ->with([
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->get();
@@ -133,7 +134,7 @@ class ClassSubjectRepository
     /**
      * Find assignments by topic ID (through subject relationship)
      */
-    public function findByTopic(int $topicId, array $fields = ['*']): Collection
+    public function findByTopic(string $topicId, array $fields = ['*']): Collection
     {
         return ClassSubject::select($fields)
             ->whereHas('subject', function($query) use ($topicId) {
@@ -143,26 +144,26 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->get();
     }
 
     /**
-     * Find assignments by grade level
+     * Find assignments by protocol level
      */
-    public function findByGrade(int $grade, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    public function findByProtocol(int $protocolId, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         return ClassSubject::select($fields)
-            ->whereHas('classRoom', function($query) use ($grade) {
-                $query->where('grade', $grade);
+            ->whereHas('classRoom', function ($query) use ($protocolId) {
+                $query->where('protocol_id', $protocolId);
             })
             ->with([
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->paginate($perPage);
@@ -171,7 +172,7 @@ class ClassSubjectRepository
     /**
      * Check if subject is already assigned to classroom
      */
-    public function isSubjectAssigned(int $classRoomId, int $subjectId): bool
+    public function isSubjectAssigned(string $classRoomId, string $subjectId): bool
     {
         return ClassSubject::where('class_room_id', $classRoomId)
             ->where('subject_id', $subjectId)
@@ -181,7 +182,7 @@ class ClassSubjectRepository
     /**
      * Find specific assignment by classroom and subject
      */
-    public function findByClassRoomAndSubject(int $classRoomId, int $subjectId): ?ClassSubject
+    public function findByClassRoomAndSubject(string $classRoomId, string $subjectId): ?ClassSubject
     {
         return ClassSubject::where('class_room_id', $classRoomId)
             ->where('subject_id', $subjectId)
@@ -189,7 +190,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->first();
     }
@@ -211,7 +212,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest()
             ->paginate($perPage);
@@ -226,7 +227,7 @@ class ClassSubjectRepository
             ->with([
                 'subject:id,name,photo,tagline,teacher_id',
                 'subject.teacher:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->latest();
 
@@ -266,7 +267,7 @@ class ClassSubjectRepository
                 'subject:id,name,photo,tagline,teacher_id,topic_id',
                 'subject.teacher:id,name,email,photo',
                 'subject.topic:id,name,photo',
-                'classRoom:id,name,photo,grade'
+            'classRoom:id,name,photo,protocol_id'
             ])
             ->get();
     }
@@ -274,26 +275,27 @@ class ClassSubjectRepository
     /**
      * Get available subjects for classroom (not yet assigned)
      */
-    public function getAvailableSubjectsForClassRoom(int $classRoomId): Collection
+    public function getAvailableSubjectsForClassRoom(string $classRoomId): Collection
     {
         return Subject::whereDoesntHave('classSubjects', function($query) use ($classRoomId) {
                 $query->where('class_room_id', $classRoomId);
             })
             ->with(['teacher:id,name,email,photo', 'topic:id,name,photo'])
-            ->select(['id', 'name', 'photo', 'content', 'tagline', 'teacher_id', 'topic_id'])
-            ->latest()
+            // Memastikan 'code' dipilih agar tidak bernilai null di JSON Resource
+            ->select(['id', 'code', 'name', 'photo', 'content', 'tagline', 'teacher_id', 'topic_id'])
+            ->latest('created_at')
             ->get();
     }
 
     /**
      * Get available classrooms for subject (not yet assigned)
      */
-    public function getAvailableClassRoomsForSubject(int $subjectId): Collection
+    public function getAvailableClassRoomsForSubject(string $subjectId): Collection
     {
         return ClassRoom::whereDoesntHave('classSubjects', function($query) use ($subjectId) {
                 $query->where('subject_id', $subjectId);
             })
-            ->select(['id', 'name', 'photo', 'grade'])
+            ->select(['id', 'name', 'photo', 'protocol_id'])
             ->latest()
             ->get();
     }
@@ -301,25 +303,35 @@ class ClassSubjectRepository
     /**
      * Bulk assign subjects to classroom
      */
-    public function bulkAssignToClassRoom(int $classRoomId, array $subjectIds): array
+    public function bulkAssignToClassRoom(string $classRoomId, array $subjectIds): array
     {
+        // Get already assigned subjects
+        $alreadyAssigned = ClassSubject::where('class_room_id', $classRoomId)
+            ->whereIn('subject_id', $subjectIds)
+            ->pluck('subject_id')
+            ->toArray();
+
+        // Filter out already assigned ones
+        $newSubjectIds = array_diff($subjectIds, $alreadyAssigned);
+
         $assignments = [];
-        foreach ($subjectIds as $subjectId) {
-            // Check if already assigned
-            if (!$this->isSubjectAssigned($classRoomId, $subjectId)) {
-                $assignments[] = $this->create([
-                    'class_room_id' => $classRoomId,
-                    'subject_id' => $subjectId,
-                ]);
-            }
+
+        foreach ($newSubjectIds as $subjectId) {
+            $assignment = $this->create([
+                'class_room_id' => $classRoomId,
+                'subject_id' => $subjectId,
+            ]);
+            $assignment->load(['subject', 'classRoom']);
+            $assignments[] = $assignment;
         }
+
         return $assignments;
     }
 
     /**
      * Bulk assign classrooms to subject
      */
-    public function bulkAssignToSubject(int $subjectId, array $classRoomIds): array
+    public function bulkAssignToSubject(string $subjectId, array $classRoomIds): array
     {
         $assignments = [];
         foreach ($classRoomIds as $classRoomId) {
@@ -337,7 +349,7 @@ class ClassSubjectRepository
     /**
      * Get assignment statistics for classroom
      */
-    public function getClassRoomStatistics(int $classRoomId): array
+    public function getClassRoomStatistics(string $classRoomId): array
     {
         $totalSubjects = ClassSubject::where('class_room_id', $classRoomId)->count();
         $uniqueTeachers = ClassSubject::where('class_room_id', $classRoomId)
@@ -359,29 +371,29 @@ class ClassSubjectRepository
     /**
      * Get assignment statistics for subject
      */
-    public function getSubjectStatistics(int $subjectId): array
+    public function getSubjectStatistics(string $subjectId): array
     {
         $totalClassrooms = ClassSubject::where('subject_id', $subjectId)->count();
-        $gradeDistribution = ClassSubject::where('subject_id', $subjectId)
+        $protocol_idDistribution = ClassSubject::where('subject_id', $subjectId)
             ->join('class_rooms', 'class_subjects.class_room_id', '=', 'class_rooms.id')
-            ->groupBy('class_rooms.grade')
-            ->selectRaw('class_rooms.grade, COUNT(*) as count')
+            ->groupBy('class_rooms.protocol_id')
+            ->selectRaw('class_rooms.protocol_id, COUNT(*) as count')
             ->get()
-            ->pluck('count', 'grade')
+            ->pluck('count', 'protocol_id')
             ->toArray();
 
         return [
             'total_classrooms' => $totalClassrooms,
-            'grade_distribution' => $gradeDistribution
+            'protocol_id_distribution' => $protocol_idDistribution
         ];
     }
 
     /**
      * Get classrooms assigned to teacher via their subjects
      */
-    public function getTeacherClassRooms(int $teacherId): Collection
+    public function getTeacherClassRooms(string $teacherId): Collection
     {
-        return ClassRoom::select(['class_rooms.id', 'class_rooms.name', 'class_rooms.photo', 'class_rooms.grade'])
+        return ClassRoom::select(['class_rooms.id', 'class_rooms.name', 'class_rooms.photo', 'class_rooms.protocol_id'])
             ->join('class_subjects', 'class_rooms.id', '=', 'class_subjects.class_room_id')
             ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
             ->where('subjects.teacher_id', $teacherId)

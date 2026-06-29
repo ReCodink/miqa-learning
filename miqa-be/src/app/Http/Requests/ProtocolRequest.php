@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ClassSubjectBulkAssignToClassRoomRequest extends FormRequest
+class ProtocolRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return true; // Otorisasi ditangani di middleware/policies
     }
 
     /**
@@ -21,9 +21,12 @@ class ClassSubjectBulkAssignToClassRoomRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Menyesuaikan parameter route, pastikan di route menggunakan {id} atau {protocol}
+        $id = $this->route('id') ?? $this->route('protocol');
+
         return [
-            'subject_ids' => 'required|array|min:1',
-            'subject_ids.*' => 'required|string|exists:subjects,id'
+            'name' => 'required|string|max:255|unique:protocols,name,' . $id,
+            'description' => 'required|string|max:1000',
         ];
     }
 
@@ -33,11 +36,9 @@ class ClassSubjectBulkAssignToClassRoomRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'subject_ids.required' => 'Subject IDs array is required',
-            'subject_ids.array' => 'Subject IDs must be an array',
-            'subject_ids.min' => 'At least one subject ID is required',
-            'subject_ids.*.string' => 'Each subject ID must be a string',
-            'subject_ids.*.exists' => 'One or more subjects do not exist',
+            'name.required' => 'Protocol name is required',
+            'name.unique' => 'Protocol name already exists',
+            'description.required' => 'Protocol description is required',
         ];
     }
 }

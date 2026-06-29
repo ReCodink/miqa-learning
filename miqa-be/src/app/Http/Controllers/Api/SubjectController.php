@@ -83,7 +83,7 @@ class SubjectController extends Controller
     /**
      * Display the specified subject
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $subject = $this->subjectService->findSubject($id, ['*']);
@@ -135,7 +135,7 @@ class SubjectController extends Controller
     /**
      * Update the specified subject
      */
-    public function update(SubjectRequest $request, int $id)
+    public function update(SubjectRequest $request, string $id)
     {
         try {
             // Check authorization - managers can edit any subject, teachers can only edit their own
@@ -179,7 +179,7 @@ class SubjectController extends Controller
     /**
      * Remove the specified subject
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->subjectService->deleteSubject($id);
@@ -205,7 +205,7 @@ class SubjectController extends Controller
     /**
      * Assign subject to teacher
      */
-    public function assignTeacher(AssignTeacherRequest $request, int $id)
+    public function assignTeacher(AssignTeacherRequest $request, string $id)
     {
         try {
 
@@ -239,7 +239,7 @@ class SubjectController extends Controller
     /**
      * Remove teacher assignment from subject
      */
-    public function unassignTeacher(int $id)
+    public function unassignTeacher(string $id)
     {
         try {
             $subject = $this->subjectService->unassignTeacher($id);
@@ -273,7 +273,7 @@ class SubjectController extends Controller
             $search = $request->get('q', '');
             $page = $request->get('page', 1);
             $perPage = $request->get('limit', 6);
-            $fields = ['id', 'name', 'tagline', 'photo', 'content', 'topic_id', 'teacher_id'];
+            $fields = ['id', 'code', 'name', 'tagline', 'photo', 'content', 'topic_id', 'teacher_id'];
 
             $result = $this->subjectService->searchWithPagination($search, $fields, $page, $perPage);
 

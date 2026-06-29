@@ -68,7 +68,7 @@ class QuestionAnswerController extends Controller
     /**
      * Display the specified question answer
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         try {
             $answer = $this->questionAnswerService->findQuestionAnswer($id);
@@ -94,7 +94,7 @@ class QuestionAnswerController extends Controller
     /**
      * Grade essay answers (Teachers only)
      */
-    public function gradeAnswer(QuestionAnswerGradeRequest $request, int $id)
+    public function gradeAnswer(QuestionAnswerGradeRequest $request, string $id)
     {
         try {
             $answer = $this->questionAnswerService->gradeAnswer($id, $request->validated());

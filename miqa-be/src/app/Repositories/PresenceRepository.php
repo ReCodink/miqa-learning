@@ -2,28 +2,31 @@
 
 namespace App\Repositories;
 
-use App\Models\User;
+use App\Models\Presence;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class UserRepository
+class PresenceRepository
 {
     public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return User::select($fields)->with('roles')->latest()->paginate($perPage);
+        return Presence::select($fields)
+            ->latest('created_at')
+            ->with('roles')
+            ->paginate($perPage);
     }
 
     public function getAll(array $fields = ['*']): Collection
     {
-        return User::select($fields)->with('roles')->latest()->get();
+        return Presence::select($fields)->with('roles')->latest('created_at')->get();
     }
 
     /**
-     * Ditambahkan with('roles') untuk efisiensi UserResource di API profile
+     * Ditambahkan with('roles') untuk efisiensi PresenceResource di API profile
      */
-    public function getById(string $id, array $fields = ['*']): User
+    public function getById(string $id, array $fields = ['*']): Presence
     {
-        return User::select($fields)->with('roles')->findOrFail($id);
+        return Presence::select($fields)->with('roles')->findOrFail($id);
     }
 
     /**
@@ -31,7 +34,7 @@ class UserRepository
      */
     public function search(string $query, array $fields = ['*'], int $perPage = 10, int $page = null): LengthAwarePaginator
     {
-        return User::select($fields)
+        return Presence::select($fields)
             ->with('roles')
             ->when(!empty($query), function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
@@ -45,7 +48,7 @@ class UserRepository
 
     public function searchForModal(string $query, array $fields = ['*'], int $limit = 6): Collection
     {
-        return User::select($fields)
+        return Presence::select($fields)
             ->with('roles')
             ->when(!empty($query), function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
@@ -60,36 +63,36 @@ class UserRepository
 
     public function findByCode(string $code, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return User::select($fields)->with('roles')->where('code', $code)->latest()->paginate($perPage);
+        return Presence::select($fields)->with('roles')->where('code', $code)->latest()->paginate($perPage);
     }
 
     public function findByGender(string $gender, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return User::select($fields)->with('roles')->where('gender', $gender)->latest()->paginate($perPage);
+        return Presence::select($fields)->with('roles')->where('gender', $gender)->latest()->paginate($perPage);
     }
 
     public function findByRole(string $role, array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
-        return User::select($fields)->role($role)->with('roles')->latest()->paginate($perPage);
+        return Presence::select($fields)->role($role)->with('roles')->latest()->paginate($perPage);
     }
 
-    public function create(array $data): User
+    public function create(array $data): Presence
     {
-        $manager = User::create($data);
+        $manager = Presence::create($data);
         $manager->assignRole('manager');
         return $manager->fresh();
     }
 
-    public function update(string $id, array $data): User
+    public function update(string $id, array $data): Presence
     {
-        $user = User::findOrFail($id);
-        $user->update($data);
-        return $user->fresh();
+        $presence = Presence::findOrFail($id);
+        $presence->update($data);
+        return $presence->fresh();
     }
 
     public function delete(string $id): bool
     {
-        $user = User::findOrFail($id);
-        return (bool) $user->delete();
+        $presence = Presence::findOrFail($id);
+        return (bool) $presence->delete();
     }
 }

@@ -22,7 +22,7 @@ class AssignTeacherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'teacher_id' => 'required|integer|exists:users,id'
+            'teacher_id' => 'required|string|exists:users,id'
         ];
     }
 
@@ -35,7 +35,7 @@ class AssignTeacherRequest extends FormRequest
     {
         return [
             'teacher_id.required' => 'Teacher ID is required',
-            'teacher_id.integer' => 'Teacher ID must be an integer',
+            'teacher_id.string' => 'Teacher ID must be an string',
             'teacher_id.exists' => 'Selected teacher does not exist'
         ];
     }

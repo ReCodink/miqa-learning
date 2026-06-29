@@ -33,7 +33,7 @@ class SubjectRepository
     /**
      * Find subject by ID with full relationships
      */
-    public function findWithRelations(int $id, array $fields = ['*']): Subject
+    public function findWithRelations(string $id, array $fields = ['*']): Subject
     {
         return Subject::select($fields)
             ->with([
@@ -83,7 +83,7 @@ class SubjectRepository
     /**
      * Update subject by ID
      */
-    public function update(int $id, array $data): Subject
+    public function update(string $id, array $data): Subject
     {
         $subject = Subject::findOrFail($id);
         $subject->update($data);
@@ -93,7 +93,7 @@ class SubjectRepository
     /**
      * Delete subject by ID
      */
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $subject = Subject::findOrFail($id);
         return $subject->delete();
@@ -134,7 +134,7 @@ class SubjectRepository
         }
 
         $total = $queryBuilder->count();
-        
+
         $subjects = $queryBuilder->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
@@ -225,7 +225,7 @@ class SubjectRepository
     /**
      * Find subject by ID (simple find)
      */
-    public function find(int $id): Subject
+    public function find(string $id): Subject
     {
         return Subject::findOrFail($id);
     }

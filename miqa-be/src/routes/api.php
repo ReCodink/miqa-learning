@@ -246,8 +246,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
             // Presence Sessions Management (SINKRON DENGAN CONTROLLER BARU)
             Route::prefix('sessions')->group(function () {
-                Route::post('/', [PresenceSessionController::class, 'store'])->can('create-presence-session');
                 Route::get('/{id}', [PresenceSessionController::class, 'show']);
+                Route::post('/', [PresenceSessionController::class, 'store'])->can('create-presence-session');
                 Route::put('/{id}', [PresenceSessionController::class, 'update'])->can('update-presence-session');
                 Route::post('/{id}/activate', [PresenceSessionController::class, 'activate'])->can('activate-presence-session');
                 Route::post('/{id}/deactivate', [PresenceSessionController::class, 'deactivate'])->can('deactivate-presence-session');
@@ -274,19 +274,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/user-stats', [PresenceReportController::class, 'userStats']);
             Route::get('/session/{session}', [PresenceReportController::class, 'sessionReport']);
             Route::get('/summary', [PresenceReportController::class, 'summary']);
-
-            Route::middleware('role:manager|teacher')->group(function () {
-                Route::get('/security-flags', [PresenceReportController::class, 'securityFlags'])->can('view-security-flags');
-                Route::get('/audit-logs', [PresenceReportController::class, 'auditLogs'])->can('view-audit-logs');
-            });
-        });
-
-        Route::middleware('role:manager|teacher')->prefix('security')->group(function () {
-            Route::get('/flags', [PresenceSecurityController::class, 'listFlags'])->can('review-security-flags');
-            Route::put('/flags/{flag}', [PresenceSecurityController::class, 'reviewFlag'])->can('review-security-flags');
-            Route::post('/devices/{device}/trust', [PresenceSecurityController::class, 'trustDevice'])->can('trust-device');
-            Route::delete('/devices/{device}', [PresenceSecurityController::class, 'revokeDevice'])->can('revoke-device');
-            Route::get('/devices', [PresenceSecurityController::class, 'userDevices']);
         });
     });
 });

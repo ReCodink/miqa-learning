@@ -3,10 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\Topic;
+use App\Repositories\Contracts\TopicRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class TopicRepository
+class TopicRepository implements TopicRepositoryInterface
 {
     /**
      * Get paginated topics with subjects count only

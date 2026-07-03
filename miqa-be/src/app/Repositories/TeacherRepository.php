@@ -3,10 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use App\Repositories\Contracts\TeacherRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class TeacherRepository
+class TeacherRepository implements TeacherRepositoryInterface
 {
     public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {

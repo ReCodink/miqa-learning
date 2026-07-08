@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolePermissionSeeder::class,    // 1. Create roles and permissions first
             UserSeeder::class,           // 2. Commented out - Creates 1000+ users (too much data)
+            PresencePermissionSeeder::class, // 3. Create presence-related permissions
             // TopicSeeder::class,          // 3. Commented out - Creates 1000 topics
             // SubjectSeeder::class,        // 4. Commented out - Creates 1000 subjects
             // ClassRoomSeeder::class,      // 5. Commented out - Creates 1000 classrooms

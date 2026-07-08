@@ -16,6 +16,7 @@ class PresenceRepository
     /**
      * Ambil data presensi berpaginasi (Asli)
      */
+    
     public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
     {
         if ($fields !== ['*'] && !in_array('user_id', $fields)) {

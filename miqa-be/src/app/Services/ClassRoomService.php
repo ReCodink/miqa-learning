@@ -32,10 +32,11 @@ class ClassRoomService
     /**
      * Get all classrooms without pagination
      */
-    public function getAll(array $fields = ['*']): Collection
-    {
-        return $this->classRoomRepository->getAll($fields);
-    }
+
+
+
+
+    
 
     /**
      * Find classroom by ID

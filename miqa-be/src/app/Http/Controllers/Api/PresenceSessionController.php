@@ -15,7 +15,7 @@ use Exception;
 
 class PresenceSessionController extends Controller
 {
-    protected AttendanceService $attendanceService;
+    private AttendanceService $attendanceService;
 
     public function __construct(AttendanceService $attendanceService)
     {
@@ -88,24 +88,7 @@ class PresenceSessionController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $session = PresenceSession::with(['createdBy', 'qrTokens', 'presences'])->findOrFail($id);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Presence session retrieved successfully.',
-                'data' => new PresenceSessionResource($session)
-            ]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Presence session not found.'
-            ], 404);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve presence session.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            $presenceSession = $this->
         }
     }
 

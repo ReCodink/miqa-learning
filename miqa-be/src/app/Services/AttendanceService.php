@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Presence;
 use App\Models\PresenceQrToken;
 use App\Models\PresenceSession;
 use App\Models\User;
@@ -9,12 +10,14 @@ use App\Repositories\PresenceRepository;
 use App\Repositories\PresenceSessionRepository;
 use App\Repositories\PresenceQrTokenRepository;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class AttendanceService
 {
-    protected PresenceRepository $presenceRepo;
-    protected PresenceSessionRepository $sessionRepo;
-    protected PresenceQrTokenRepository $tokenRepo;
+    private PresenceRepository $presenceRepo;
+    private PresenceSessionRepository $sessionRepo;
+    private PresenceQrTokenRepository $tokenRepo;
 
     private const EARTH_RADIUS_METERS = 6371000;
     private const MAX_VELOCITY_KMH = 100;
@@ -28,6 +31,28 @@ class AttendanceService
         $this->sessionRepo = $sessionRepo;
         $this->tokenRepo = $tokenRepo;
     }
+
+    public function getPaginated(array $fields = ['*'], int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->presenceRepo->getPaginated($fields, $perPage);
+    }
+
+    public function getAll(array $fields = ['*']): Collection
+    {
+        return $this->presenceRepo->getAll($fields);
+    }
+
+    public function findPresence(string $id, array $fields = ['*']): Presence
+    {
+        return $this->presenceRepo->getById($id, $fields);
+    }
+
+    public function searchPresence(string $query, array $fields = ['*'], int $perPage = 10, ?int $page = null): LengthAwarePaginator
+    {
+        return $this->presenceRepo->search($query, $fields, $perPage, $page);
+    }
+
+    public function findPresenceBySession()
 
     public function generateQrToken(PresenceSession $session, int $expiresInSeconds = 30): PresenceQrToken
     {

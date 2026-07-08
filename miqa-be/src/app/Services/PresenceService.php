@@ -93,6 +93,4 @@ class PresenceService
     {
         return $this->presenceRepository->delete($id);
     }
-
-    
 }
